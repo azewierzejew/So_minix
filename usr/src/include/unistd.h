@@ -85,6 +85,7 @@
 
 __BEGIN_DECLS
 int printmessage(void);
+int storage(int);
 __dead	 void _exit(int);
 int	 access(const char *, int);
 unsigned int alarm(unsigned int);

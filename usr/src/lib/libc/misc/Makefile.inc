@@ -7,4 +7,4 @@
 SRCS+=	initfini.c
 
 # for -fstack-protector
-SRCS+=  stack_protector.c printmessage.c
+SRCS+=  stack_protector.c printmessage.c storage.c

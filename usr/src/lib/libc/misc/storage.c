@@ -10,7 +10,7 @@ static int get_ipc_endpt(endpoint_t *pt)
         return minix_rs_lookup("ipc", pt);
 }
 
-int printmessage(void)
+int storage(int new)
 {
         endpoint_t ipc_pt;
         message m;
@@ -19,5 +19,7 @@ int printmessage(void)
                 errno = ENOSYS;
                 return -1;
         }
-        return (_syscall(ipc_pt, IPC_PRINTMESSAGE, &m));
+        m.m1_i1 = new;
+        _syscall(ipc_pt, IPC_STORAGE, &m);
+		return m.m1_i1;
 }

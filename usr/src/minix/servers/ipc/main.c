@@ -17,6 +17,7 @@ static struct {
 	{ IPC_SEMCTL,	do_semctl,	0 },
 	{ IPC_SEMOP,	do_semop,	1 },
 	{ IPC_PRINTMESSAGE,	do_printmessage, 0 },
+	{ IPC_STORAGE,	do_storage, 0 },
 };
 
 #define SIZE(a) (sizeof(a)/sizeof(a[0]))

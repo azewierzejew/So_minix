@@ -2,6 +2,6 @@
 
 int do_printmessage(message *m)
 {
-        printf("Hello world!\n");
+        printf("Hello world!\r\n");
         return OK;
 }

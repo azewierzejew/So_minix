@@ -7,5 +7,5 @@ elif (( $# == 1 ))
 then
 	scp -r "${1}" "minix:/"
 else
-	scp -r "${1}" "minix:${2}"
+	scp -r "${1}" "minix:/${2}"
 fi
