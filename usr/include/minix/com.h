@@ -752,6 +752,7 @@
 #define IPC_SEMGET	(IPC_BASE+5)
 #define IPC_SEMCTL	(IPC_BASE+6)
 #define IPC_SEMOP	(IPC_BASE+7)
+#define IPC_PRINTMESSAGE (IPC_BASE+8)
 
 /*===========================================================================*
  *                Messages for Scheduling				     *
