@@ -84,6 +84,7 @@
 #include <sys/null.h>
 
 __BEGIN_DECLS
+int printmessage(void);
 __dead	 void _exit(int);
 int	 access(const char *, int);
 unsigned int alarm(unsigned int);
