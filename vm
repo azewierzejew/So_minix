@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+if [[ $1 == "raw" ]]
+then
+	# start raw
+	echo "qemu-system-x86_64 -enable-kvm -curses -drive format=raw,file=minix_raw.img -rtc base=localtime -net user,hostfwd=tcp::11337-:22 -net nic,model=virtio -m 1024M"
+	read -t 5
+	qemu-system-x86_64 -enable-kvm -curses -drive format=raw,file=minix_raw.img -rtc base=localtime -net user,hostfwd=tcp::11337-:22 -net nic,model=virtio -m 1024M
+elif [[ $1 == "create" ]]
+then
+	# creat cow
+	file="${2:-minix.img}"
+	echo "qemu-img create -f qcow2 -o backing_file=~/Desktop/so/minix_raw.img \"$file\""
+	read -t 5
+	qemu-img create -f qcow2 -o backing_file=~/Desktop/so/minix_raw.img "${file}"
+elif [[ $1 == "cow" ]]
+then
+	# run COW
+	file="${2:-minix.img}"
+	echo "qemu-system-x86_64 -enable-kvm  -curses -drive file=\"${file}\" -rtc base=localtime -net user,hostfwd=tcp::22137-:22 -net nic,model=virtio -m 1024M"
+	read -t 5
+	qemu-system-x86_64 -enable-kvm  -curses -drive file="${file}" -rtc base=localtime -net user,hostfwd=tcp::22137-:22 -net nic,model=virtio -m 1024M
+else
+	echo "Usage: `basename $0` [raw|create|cow]"
+	exit 1
+fi

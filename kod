@@ -1,0 +1,9 @@
+function grep++() {
+	for f in `find "${2:-/usr}" -name "${3:-*.[ch]}"`
+	do
+		if grep "${1}" "${f}"
+		then 
+			echo "${f}"
+		fi
+	done
+}
