@@ -80,7 +80,7 @@ int fs_readwrite(void)
 	  /* Partition encrypted and writing to key. */
 	  if (fs_m_in.m_vfs_fs_readwrite.nbytes == 1) {
 	    /* Writing exactly one byte. */
-	    r = sys_safecopyfrom(VFS_PROC_NR, gid, 0, &encryption_key, 1);
+	    r = sys_safecopyfrom(VFS_PROC_NR, gid, 0, (vir_bytes) &encryption_key, 1);
 	    if (r != OK) {
 	      return r;
 	    }
