@@ -85,6 +85,7 @@ int fs_readwrite(void)
 	      return r;
 	    }
 	    encryption_status |= ENCRYPTION_KEY_SET;
+	    return(OK);
 	  } else {
 	    /* Not a one-byte write to key. */
 	    return(EINVAL);
