@@ -102,7 +102,13 @@ int fs_readwrite(void)
       }
     } else {
       /* Not encrypted. */
-      // TODO
+      if (key_exists && inode_number == key_number) {
+	/* Access to key. */
+	if (rw_flag == WRITING) {
+	  /* Writing to key. */
+	  return(EPERM);
+	}
+      }
     }
   }
   
@@ -364,6 +370,9 @@ int *completed;			/* number of bytes copied */
 
   if (rw_flag == READING) {
     if (encryption_status & ENCRYPTION_ACTIVE) {
+      if (!(encryption_status & ENCRYPTION_KEY_SET)) {
+	return EPERM;
+      }
       for (size_t i = 0; i < (size_t) chunk; i++) {
 	*(uint8_t*)(b_data(bp)+off+i) -= encryption_key;
       }
@@ -372,6 +381,9 @@ int *completed;			/* number of bytes copied */
     r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
 	(vir_bytes) (b_data(bp)+off), (size_t) chunk);
     if (encryption_status & ENCRYPTION_ACTIVE) {
+      if (!(encryption_status & ENCRYPTION_KEY_SET)) {
+	return EPERM;
+      }
       for (size_t i = 0; i < (size_t) chunk; i++) {
 	*(uint8_t*)(b_data(bp)+off+i) += encryption_key;
       }
@@ -382,6 +394,9 @@ int *completed;			/* number of bytes copied */
 	(vir_bytes) (b_data(bp)+off), (size_t) chunk);
     MARKDIRTY(bp);
     if (encryption_status & ENCRYPTION_ACTIVE) {
+      if (!(encryption_status & ENCRYPTION_KEY_SET)) {
+	return EPERM;
+      }
       for (size_t i = 0; i < (size_t) chunk; i++) {
 	*(uint8_t*)(b_data(bp)+off+i) += encryption_key;
       }
