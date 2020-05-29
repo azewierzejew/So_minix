@@ -96,7 +96,7 @@ unsigned int maxlen)
 /*===========================================================================*
  *				search_special					     *
  *===========================================================================*/
-int search_special(const char *name, ino_t *numb)
+int search_special(char string[MFS_NAME_MAX], ino_t *numb)
 {
   struct inode *root = find_inode(fs_dev, ROOT_INODE);
   if (root == NULL) {
