@@ -119,6 +119,8 @@ static int sef_cb_init_fresh(int UNUSED(type), sef_init_info_t *UNUSED(info))
 
   lmfs_buf_pool(DEFAULT_NR_BUFS);
 
+  encryption_status = 0;
+
   return(OK);
 }
 

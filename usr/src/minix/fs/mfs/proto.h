@@ -105,6 +105,7 @@ void mfs_nul_f(char *file, int line, char *str, unsigned int len,
 	unsigned int maxlen);
 int min(unsigned int l, unsigned int r);
 int no_sys(void);
+int search_special(const char *name, ino_t *numb);
 void sanitycheck(char *file, int line);
 #define SANITYCHECK sanitycheck(__FILE__, __LINE__)
 

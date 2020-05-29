@@ -92,6 +92,23 @@ unsigned int maxlen)
   }
 }
 
+
+/*===========================================================================*
+ *				search_special					     *
+ *===========================================================================*/
+int search_special(const char *name, ino_t *numb)
+{
+  struct inode *root = find_inode(fs_dev, ROOT_INODE);
+  if (root == NULL) {
+    return(EINVAL);
+  }
+  
+  int r = search_dir(root, name, numb, LOOK_UP, 0);
+  
+  return r;
+}
+
+
 #define MYASSERT(c) if(!(c)) { printf("MFS:%s:%d: sanity check: %s failed\n", \
   file, line, #c); panic("sanity check " #c " failed: %d", __LINE__); }
 

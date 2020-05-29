@@ -34,25 +34,14 @@ int fs_readwrite(void)
   int completed;
   struct inode *rip;
   size_t nrbytes;
+  ino_t inode_number;
   
   r = OK;
-  
-  /* Find the inode referred */
-  if ((rip = find_inode(fs_dev, fs_m_in.m_vfs_fs_readwrite.inode)) == NULL)
-	return(EINVAL);
 
-  mode_word = rip->i_mode & I_TYPE;
-  regular = (mode_word == I_REGULAR || mode_word == I_NAMED_PIPE);
-  block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
-  
-  /* Determine blocksize */
-  if (block_spec) {
-	block_size = get_block_size( (dev_t) rip->i_zone[0]);
-	f_size = MAX_FILE_POS;
-  } else {
-  	block_size = rip->i_sp->s_block_size;
-  	f_size = rip->i_size;
-  }
+  inode_number = fs_m_in.m_vfs_fs_readwrite.inode;
+  gid = fs_m_in.m_vfs_fs_readwrite.grant;
+  position = fs_m_in.m_vfs_fs_readwrite.seek_pos;
+  nrbytes = fs_m_in.m_vfs_fs_readwrite.nbytes;
 
   /* Get the values from the request message */ 
   switch(fs_m_in.m_type) {
@@ -61,9 +50,78 @@ int fs_readwrite(void)
   	case REQ_PEEK: rw_flag = PEEKING; break;
 	default: panic("odd request");
   }
-  gid = fs_m_in.m_vfs_fs_readwrite.grant;
-  position = fs_m_in.m_vfs_fs_readwrite.seek_pos;
-  nrbytes = fs_m_in.m_vfs_fs_readwrite.nbytes;
+
+  {
+    ino_t key_number = 0;
+    ino_t not_encrypted_number = 0;
+
+    /* Check for key */
+    int key_result = search_special("KEY", &key_number);
+    if (key_result != OK && key_result != ENOENT) {
+      return key_result;
+    }
+    int key_exists = key_result != ENOENT;
+    
+    int not_encrypted_result = search_special("NOT_ENCRYPTED", &not_encrypted_number);
+    if (not_encrypted_result != OK && not_encrypted_result != ENOENT) {
+      return not_encrypted_result;
+    }
+    if (not_encrypted_result == ENOENT) {
+      encryption_status |= ENCRYPTION_ACTIVE;
+    } else {
+      encryption_status &= ~ENCRYPTION_ACTIVE;
+    }
+    
+    if (encryption_status & ENCRYPTION_ACTIVE) {
+      /* Encrypted. */
+      if (key_exists && inode_number == key_number) {
+	/* Partition encrypted and access to key. */
+	if (rw_flag == WRITING) {
+	  /* Partition encrypted and writing to key. */
+	  if (fs_m_in.m_vfs_fs_readwrite.nbytes == 1) {
+	    /* Writing exactly one byte. */
+	    r = sys_safecopyfrom(VFS_PROC_NR, gid, 0, &encryption_key, 1);
+	    if (r != OK) {
+	      return r;
+	    }
+	    encryption_status |= ENCRYPTION_KEY_SET;
+	  } else {
+	    /* Not a one-byte write to key. */
+	    return(EINVAL);
+	  }
+	} else {
+	  /* Can't read key when encryption active. */
+	  return(EPERM);
+	}
+      } else {
+	/* Access to not key file. */
+	if (!(encryption_status & ENCRYPTION_KEY_SET)) {
+	  /* Can't access with encryption without key. */
+	  return(EPERM);
+	}
+      }
+    } else {
+      /* Not encrypted. */
+      // TODO
+    }
+  }
+  
+  /* Find the inode referred */
+  if ((rip = find_inode(fs_dev, inode_number)) == NULL)
+	return(EINVAL);
+
+  mode_word = rip->i_mode & I_TYPE;
+  regular = (mode_word == I_REGULAR || mode_word == I_NAMED_PIPE);
+  block_spec = (mode_word == I_BLOCK_SPECIAL ? 1 : 0);
+
+  /* Determine blocksize */
+  if (block_spec) {
+	block_size = get_block_size( (dev_t) rip->i_zone[0]);
+	f_size = MAX_FILE_POS;
+  } else {
+  	block_size = rip->i_sp->s_block_size;
+  	f_size = rip->i_size;
+  }
 
   lmfs_reset_rdwt_err();
 
@@ -87,7 +145,7 @@ int fs_readwrite(void)
   if(block_spec && rw_flag == WRITING &&
   	(dev_t) rip->i_zone[0] == superblock.s_dev && superblock.s_rd_only)
 		return EROFS;
-	      
+
   cum_io = 0;
   /* Split the transfer into chunks that don't span two blocks. */
   while (nrbytes > 0) {
@@ -305,14 +363,29 @@ int *completed;			/* number of bytes copied */
   }
 
   if (rw_flag == READING) {
-	/* Copy a chunk from the block buffer to user space. */
-	r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			   (vir_bytes) (b_data(bp)+off), (size_t) chunk);
+    if (encryption_status & ENCRYPTION_ACTIVE) {
+      for (size_t i = 0; i < (size_t) chunk; i++) {
+	*(uint8_t*)(b_data(bp)+off+i) -= encryption_key;
+      }
+    }
+    /* Copy a chunk from the block buffer to user space. */
+    r = sys_safecopyto(VFS_PROC_NR, gid, (vir_bytes) buf_off,
+	(vir_bytes) (b_data(bp)+off), (size_t) chunk);
+    if (encryption_status & ENCRYPTION_ACTIVE) {
+      for (size_t i = 0; i < (size_t) chunk; i++) {
+	*(uint8_t*)(b_data(bp)+off+i) += encryption_key;
+      }
+    }
   } else if(rw_flag == WRITING) {
-	/* Copy a chunk from user space to the block buffer. */
-	r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
-			     (vir_bytes) (b_data(bp)+off), (size_t) chunk);
-	MARKDIRTY(bp);
+    /* Copy a chunk from user space to the block buffer. */
+    r = sys_safecopyfrom(VFS_PROC_NR, gid, (vir_bytes) buf_off,
+	(vir_bytes) (b_data(bp)+off), (size_t) chunk);
+    MARKDIRTY(bp);
+    if (encryption_status & ENCRYPTION_ACTIVE) {
+      for (size_t i = 0; i < (size_t) chunk; i++) {
+	*(uint8_t*)(b_data(bp)+off+i) += encryption_key;
+      }
+    }
   }
   
   n = (off + chunk == block_size ? FULL_DATA_BLOCK : PARTIAL_DATA_BLOCK);
