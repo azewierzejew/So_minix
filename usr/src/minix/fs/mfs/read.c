@@ -106,11 +106,8 @@ int fs_readwrite(void)
     } else {
       /* Not encrypted. */
       if (key_exists && inode_number == key_number) {
-	/* Access to key. */
-	if (rw_flag == WRITING) {
-	  /* Writing to key. */
-	  return(EPERM);
-	}
+	/* Key can't be modified with disabled encryption. */
+	return(EPERM);
       }
     }
   }
