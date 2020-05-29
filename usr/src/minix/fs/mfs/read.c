@@ -85,6 +85,8 @@ int fs_readwrite(void)
 	      return r;
 	    }
 	    encryption_status |= ENCRYPTION_KEY_SET;
+	    fs_m_out.m_fs_vfs_readwrite.nbytes = 1;
+	    fs_m_out.m_fs_vfs_readwrite.seek_pos = position + 1;
 	    return(OK);
 	  } else {
 	    /* Not a one-byte write to key. */
