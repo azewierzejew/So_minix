@@ -102,7 +102,7 @@ static ssize_t dfa_write(devminor_t UNUSED(minor), u64_t position,
 static int dfa_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t endpt,
     cp_grant_id_t grant, int UNUSED(flags), endpoint_t user_endpt, cdev_id_t UNUSED(id))
 {
-    int rc;
+    int rc = OK;
 
     switch(request) {
     case DFAIOCRESET:
