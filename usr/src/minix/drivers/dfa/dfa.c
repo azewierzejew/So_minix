@@ -64,7 +64,7 @@ static ssize_t dfa_read(devminor_t UNUSED(minor), u64_t position,
     int pattern;
 
     pattern = is_accepting[current_state] ? 'Y' : 'N';
-    pattern = pattern << 24 + pattern << 16 + pattern << 8 + pattern;
+    pattern = (pattern << 24) + (pattern << 16) + (pattern << 8) + pattern;
 
     /* Set bytes for the caller. */
     if ((ret = sys_safememset(endpt, grant, 0, pattern, size)) != OK)
@@ -88,7 +88,7 @@ static ssize_t dfa_write(devminor_t UNUSED(minor), u64_t position,
         }
 
         size_t length = end - start;
-        if ((ret = sys_safecopyfrom(endpt, grant, start, (vir_bytes) buffer, length) != OK)
+        if ((ret = sys_safecopyfrom(endpt, grant, start, (vir_bytes) buffer, length)) != OK)
             return ret;
 
         for (size_t i = 0; i < length; i++) {
@@ -137,7 +137,7 @@ static int sef_cb_lu_state_save(int UNUSED(state)) {
     ds_publish_u32("current_state", current_state, DSF_OVERWRITE);
 
     ds_publish_mem("is_accepting", is_accepting, STATE_COUNT, DSF_OVERWRITE);
-    ds_publish_mem("transitions", transitions, STATE_COUNT * STATE_COUNT, DSF_OVERWRITE);
+    ds_publish_mem("transitions", (char *) transitions, STATE_COUNT * STATE_COUNT, DSF_OVERWRITE);
 
     return OK;
 }
@@ -153,7 +153,7 @@ static int lu_state_restore() {
 
     ds_retrieve_mem("is_accepting", is_accepting, &length);
     ds_delete_mem("is_accepting");
-    ds_retrieve_mem("transitions", transitions, &length);
+    ds_retrieve_mem("transitions", char *) transitions, &length);
     ds_delete_mem("transitions");
 
     return OK;
@@ -195,7 +195,7 @@ static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
             /* Restore the state. */
             lu_state_restore();
             do_announce_driver = FALSE;
-            printf("%sHey, I'm a new version!\n", dfa_msg);
+            // printf("%sHey, I'm a new version!\n", dfa_msg);
         break;
 
         case SEF_INIT_RESTART:
