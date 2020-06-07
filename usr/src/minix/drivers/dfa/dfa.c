@@ -118,11 +118,17 @@ static int dfa_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t
         break;
 
     case DFAIOCACCEPT:
-        is_accepting[current_state] = 1;
+        rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) buffer, 1);
+        if (rc == OK) {
+            is_accepting[buffer[0]] = 1;
+        }
         break;
 
     case DFAIOCREJECT:
-        is_accepting[current_state] = 0;
+        rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) buffer, 1);
+        if (rc == OK) {
+            is_accepting[buffer[0]] = 1;
+        }
         break;
 
     default:
