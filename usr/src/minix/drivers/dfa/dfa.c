@@ -46,13 +46,11 @@ static unsigned char buffer[BUFFER_SIZE];
 static int dfa_open(devminor_t UNUSED(minor), int UNUSED(access),
     endpoint_t UNUSED(user_endpt))
 {
-    // printf("dfa_open(). Called %d time(s).\n", ++open_counter);
     return OK;
 }
 
 static int dfa_close(devminor_t UNUSED(minor))
 {
-    // printf("dfa_close()\n");
     return OK;
 }
 
@@ -127,7 +125,7 @@ static int dfa_ioctl(devminor_t UNUSED(minor), unsigned long request, endpoint_t
     case DFAIOCREJECT:
         rc = sys_safecopyfrom(endpt, grant, 0, (vir_bytes) buffer, 1);
         if (rc == OK) {
-            is_accepting[buffer[0]] = 1;
+            is_accepting[buffer[0]] = 0;
         }
         break;
 
@@ -194,20 +192,18 @@ static int sef_cb_init(int type, sef_init_info_t *UNUSED(info))
             current_state = 0;
             memset(is_accepting, 0, STATE_COUNT);
             memset(transitions, 0, STATE_COUNT * STATE_COUNT);
-            // printf("%sHello world!\n", dfa_msg);
         break;
 
         case SEF_INIT_LU:
             /* Restore the state. */
             lu_state_restore();
             do_announce_driver = FALSE;
-            // printf("%sHey, I'm a new version!\n", dfa_msg);
         break;
 
         case SEF_INIT_RESTART:
-            // strncpy(dfa_msg, HELLO_MESSAGE, HELLO_LEN);
-            // dfa_msg[HELLO_LEN - 1] = 0;
-            // printf("%sHey, I've just been restarted!\n", dfa_msg);
+            current_state = 0;
+            memset(is_accepting, 0, STATE_COUNT);
+            memset(transitions, 0, STATE_COUNT * STATE_COUNT);
         break;
     }
 
