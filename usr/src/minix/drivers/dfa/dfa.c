@@ -6,7 +6,6 @@
 #include <minix/ds.h>
 #include <minix/ioctl.h>
 #include <sys/ioc_dfa.h>
-#include "dfa.h"
 
 /* Function prototypes for the dfa driver. */
 static int dfa_open(devminor_t minor, int access, endpoint_t user_endpt);
