@@ -153,7 +153,7 @@ static int lu_state_restore() {
 
     ds_retrieve_mem("is_accepting", is_accepting, &length);
     ds_delete_mem("is_accepting");
-    ds_retrieve_mem("transitions", char *) transitions, &length);
+    ds_retrieve_mem("transitions", (char *) transitions, &length);
     ds_delete_mem("transitions");
 
     return OK;
